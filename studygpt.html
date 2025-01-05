@@ -50,13 +50,75 @@
                                 <i class="bi bi-camera-fill mr-2"></i>Open Camera
                             </button>
                         </div>
+                        <div class="text-center">
+                            <button onclick="switchCamera()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition">
+                                <i class="bi bi-arrow-repeat mr-2"></i>Switch Camera
+                            </button>
+                        </div>
                         <button onclick="captureImage()" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition">
                             Capture & Analyze
                         </button>
                     </div>
                 </div>
-
-                <!-- StudyGPT Section -->
+            </div>
+        </div>
+        
+        <script>
+            let currentStream = null;
+            let isUsingFrontCamera = false;
+        
+            async function toggleCamera() {
+                if (currentStream) {
+                    stopCamera();
+                } else {
+                    await startCamera();
+                }
+            }
+        
+            async function startCamera() {
+                try {
+                    const constraints = {
+                        video: { facingMode: isUsingFrontCamera ? "user" : "environment" }
+                    };
+                    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    const video = document.getElementById("camera");
+                    video.srcObject = currentStream;
+                    video.classList.remove("hidden");
+                    video.play();
+                } catch (error) {
+                    console.error("Error starting camera:", error);
+                }
+            }
+        
+            function stopCamera() {
+                if (currentStream) {
+                    const tracks = currentStream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    currentStream = null;
+                }
+                const video = document.getElementById("camera");
+                video.classList.add("hidden");
+                video.srcObject = null;
+            }
+        
+            async function switchCamera() {
+                isUsingFrontCamera = !isUsingFrontCamera;
+                if (currentStream) {
+                    stopCamera();
+                    await startCamera();
+                }
+            }
+        
+            function captureImage() {
+                const video = document.getElementById("camera");
+                if (video && !video.classList.contains("hidden")) {
+                    console.log("Capture image and analyze (to be implemented)");
+                } else {
+                    alert("Please open the camera first!");
+                }
+            }
+        </script>
+        <!-- StudyGPT Section -->
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <div class="text-center mb-4">
                         <i class="bi bi-chat-dots text-4xl text-blue-500"></i>
