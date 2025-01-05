@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddy - Your Smart Learning Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-['Poppins']">
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login to StudyBuddy</h2>
+            <input type="email" id="email" placeholder="Email" class="w-full mb-4 p-2 border rounded">
+            <input type="password" id="password" placeholder="Password" class="w-full mb-4 p-2 border rounded">
+            <button onclick="login()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">Login</button>
+        </div>
+    </div>
+
+    <!-- Main App (Hidden initially) -->
+    <div id="mainApp" class="hidden">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="text-xl font-bold text-blue-500">StudyBuddy</div>
+                    <div class="flex items-center space-x-4">
+                        <span id="userEmail" class="text-gray-600"></span>
+                        <button onclick="logout()" class="text-sm text-red-500">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Scan Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-camera text-4xl text-blue-500"></i>
+                        <h3 class="text-xl font-semibold mt-2">Scan Question</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div id="camera-container" class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <video id="camera" class="w-full hidden"></video>
+                            <button onclick="toggleCamera()" class="bg-blue-500 text-white px-4 py-2 rounded">
+                                <i class="bi bi-camera-fill mr-2"></i>Open Camera
+                            </button>
+                        </div>
+                        <button onclick="captureImage()" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition">
+                            Capture & Analyze
+                        </button>
+                    </div>
+                </div>
+
+                <!-- StudyGPT Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-chat-dots text-4xl text-blue-500"></i>
+                        <h3 class="text-xl font-semibold mt-2">StudyGPT</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <textarea id="studyGptInput" class="w-full h-32 p-2 border rounded" placeholder="Type your question here..."></textarea>
+                        <button onclick="getStudyGptAnswer()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
+                            Get Answer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Subject-wise Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-book text-4xl text-blue-500"></i>
+                        <h3 class="text-xl font-semibold mt-2">Subject-wise Help</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <select id="subjectSelect" class="w-full p-2 border rounded">
+                            <option value="">Select Subject</option>
+                            <option value="mathematics">Mathematics</option>
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="biology">Biology</option>
+                            <option value="history">History</option>
+                            <option value="geography">Geography</option>
+                        </select>
+                        <textarea id="subjectQuestion" class="w-full h-32 p-2 border rounded" placeholder="Type your subject-specific question..."></textarea>
+                        <button onclick="getSubjectAnswer()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition">
+                            Get Answer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answer Display Section -->
+            <div id="answerSection" class="mt-8 bg-white p-6 rounded-lg shadow-md hidden">
+                <h3 class="text-xl font-semibold mb-4">Answer</h3>
+                <div id="answerContent" class="prose max-w-none"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login System
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (email && password) {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('userEmail').textContent = email;
+                
+                // Store user info in localStorage
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('isLoggedIn', 'true');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
+
+        // Check login status on page load
+        window.onload = () => {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (isLoggedIn === 'true') {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('userEmail').textContent = localStorage.getItem('userEmail');
+            }
+        };
+
+        // Camera Functionality
+        let stream;
+        async function toggleCamera() {
+            const camera = document.getElementById('camera');
+            
+            if (camera.classList.contains('hidden')) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    camera.srcObject = stream;
+                    camera.play();
+                    camera.classList.remove('hidden');
+                } catch (err) {
+                    console.error('Error accessing camera:', err);
+                    alert('Could not access camera');
+                }
+            } else {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                camera.classList.add('hidden');
+            }
+        }
+
+        async function captureImage() {
+            const camera = document.getElementById('camera');
+            if (!camera.classList.contains('hidden')) {
+                const canvas = document.createElement('canvas');
+                canvas.width = camera.videoWidth;
+                canvas.height = camera.videoHeight;
+                canvas.getContext('2d').drawImage(camera, 0, 0);
+                
+                const imageData = canvas.toDataURL('image/jpeg');
+                
+                // Call AI endpoint for image analysis
+                try {
+                    const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer KB5ZmJhl6BPd9bEzHwu0dpH0QpA2',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [{
+                                role: 'user',
+                                content: [
+                                    { type: 'text', text: "Analyze this question and provide a detailed answer" },
+                                    { type: 'image_url', image_url: { url: imageData } }
+                                ]
+                            }]
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    showAnswer(data.message);
+                } catch (error) {
+                    console.error('Error analyzing image:', error);
+                    alert('Error analyzing image');
+                }
+            }
+        }
+
+        async function getStudyGptAnswer() {
+            const question = document.getElementById('studyGptInput').value;
+            if (!question) return;
+
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer KB5ZmJhl6BPd9bEzHwu0dpH0QpA2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: [{ type: 'text', text: question }]
+                        }]
+                    })
+                });
+                
+                const data = await response.json();
+                showAnswer(data.message);
+            } catch (error) {
+                console.error('Error getting answer:', error);
+                alert('Error getting answer');
+            }
+        }
+
+        async function getSubjectAnswer() {
+            const subject = document.getElementById('subjectSelect').value;
+            const question = document.getElementById('subjectQuestion').value;
+            
+            if (!subject || !question) return;
+
+            try {
+                const response = await fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer KB5ZmJhl6BPd9bEzHwu0dpH0QpA2',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: [{ 
+                                type: 'text', 
+                                text: `[Subject: ${subject}] ${question}` 
+                            }]
+                        }]
+                    })
+                });
+                
+                const data = await response.json();
+                showAnswer(data.message);
+            } catch (error) {
+                console.error('Error getting answer:', error);
+                alert('Error getting answer');
+            }
+        }
+
+        function showAnswer(answer) {
+            const answerSection = document.getElementById('answerSection');
+            const answerContent = document.getElementById('answerContent');
+            
+            answerContent.innerHTML = `<p>${answer}</p>`;
+            answerSection.classList.remove('hidden');
+            
+            // Smooth scroll to answer
+            answerSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
